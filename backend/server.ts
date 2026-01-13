@@ -19,6 +19,7 @@ const fastify = Fastify({ logger: true });
 // Las variables de entorno tienen prioridad, fallbacks a las cadenas proporcionadas
 const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:7545f09686c0c0a165c0@qhosting_qhosting-db:5432/qhosting-db?sslmode=disable';
 const REDIS_URL = process.env.REDIS_URL || 'redis://default:5faf81de3571e8b7146c@qhosting_redis:6379';
+const AURUM_SECRET = process.env.AURUM_SHARED_SECRET || 'aurum_satellite_master_key';
 
 // Conexión Redis
 const redisConnection = new IORedis(REDIS_URL, {
@@ -201,6 +202,37 @@ let clients = [
 let internalStaff = [
   { id: 1, name: 'Alexander Q.', email: 'ceo@qhosting.net', role: 'ceo', status: 'active', mfa: true, lastLogin: 'Justo ahora' },
   { id: 2, name: 'Sarah Connor', email: 'sysadmin@qhosting.net', role: 'admin', status: 'active', mfa: true, lastLogin: 'Hace 2h' },
+];
+
+// --- SUPPORT TICKETS DB ---
+let tickets = [
+  { 
+    id: 'TKT-9921', 
+    subject: 'Latencia intermitente en Cluster MIA-2', 
+    status: 'open', 
+    priority: 'high', 
+    department: 'Infraestructura', 
+    date: '2024-05-15 10:30', 
+    description: 'Hemos detectado picos de latencia >200ms en la ruta de entrada. Logs adjuntos en ACC.' 
+  },
+  { 
+    id: 'TKT-8810', 
+    subject: 'Solicitud de IP Dedicada Adicional', 
+    status: 'pending', 
+    priority: 'medium', 
+    department: 'Redes', 
+    date: '2024-05-14 16:45', 
+    description: 'Requerimos una IPv4 limpia para servidor de correo transaccional.' 
+  },
+  { 
+    id: 'TKT-7721', 
+    subject: 'Facturación duplicada Mayo', 
+    status: 'resolved', 
+    priority: 'low', 
+    department: 'Facturación', 
+    date: '2024-05-01 09:00', 
+    description: 'El sistema generó dos invoices para el mismo servicio. Solicito nota de crédito.' 
+  }
 ];
 
 let systemSettings = {
@@ -389,16 +421,13 @@ fastify.get('/api/domains/manual', async () => manualDomains);
 // SEARCH: Strictly Manual / No Random Simulation
 fastify.post('/api/domains/search', async (req) => {
   const { keyword } = req.body as any;
-  // In Manual Mode, we don't check availability via API. We confirm the string is valid.
-  // We return the raw domain to be requested.
   const isValid = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(keyword);
-  
   return {
     results: isValid ? [{
       tld: `.${keyword.split('.').pop()}`,
       domain: keyword,
-      price: 15.00, // Flat rate for manual processing
-      available: true, // "Available for Request"
+      price: 15.00,
+      available: true,
       featured: false
     }] : []
   };
@@ -408,11 +437,9 @@ fastify.post('/api/domains/search', async (req) => {
 fastify.post('/api/domains/purchase', async (req) => {
   const { domain } = req.body as any;
   
-  // LOGIC: Manual Purchase / Aurum Hub Notification
   console.log(`[AURUM HUB] SOLICITUD DE COMPRA MANUAL: ${domain}`);
   console.log(`[CLOUDFLARE] Asignando Nameservers Híbridos para: ${domain}`);
 
-  // Hybrid DNS Configuration (Cloudflare + Institutional)
   const cfNames = ['dave.ns.cloudflare.com', 'lisa.ns.cloudflare.com'];
   const institutionalNames = ['ns1.qhosting.net', 'ns2.qhosting.net'];
 
@@ -420,10 +447,10 @@ fastify.post('/api/domains/purchase', async (req) => {
     id: Date.now(), 
     domain, 
     registrar: 'Aurum Registry', 
-    status: 'pending_manual_purchase', // Explicit manual status
+    status: 'pending_manual_purchase',
     expiry: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
     autoRenew: true,
-    privacy: true, // Default to privacy enabled
+    privacy: true,
     expiry_notification_sent: false,
     dnsConfig: {
       cloudflare: cfNames,
@@ -499,6 +526,34 @@ fastify.post('/api/integrations/waha/send', async (req) => {
   return { success: true, status: 'queued_in_waha' };
 });
 
+// WEBHOOK: AURUM MASTER HUB TICKET SYNC
+fastify.post('/api/integrations/aurum/ticket', async (request, reply) => {
+  const signature = request.headers['x-aurum-signature'];
+  const { ticketId, title, description, priority } = request.body as any;
+
+  // 1. Verificación de Seguridad
+  if (signature !== AURUM_SECRET) {
+    console.warn(`[SECURITY] Intento de acceso no autorizado desde Aurum Webhook.`);
+    return reply.code(403).send({ error: 'Firma de seguridad inválida' });
+  }
+
+  console.log(`[AURUM EVENT] Nuevo Ticket Recibido del Master Hub: ${ticketId}`);
+
+  // 2. Insertar ticket en la base de datos local
+  const newTicket = {
+    id: ticketId || `TKT-${Math.floor(Math.random() * 9000) + 1000}`,
+    subject: title,
+    status: 'open',
+    priority: priority || 'medium',
+    department: 'Aurum Central', // Departamento específico para tickets pusheados
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    description: description || 'Incidencia sincronizada desde el Centro de Mando Aurum.'
+  };
+  tickets.unshift(newTicket);
+
+  return { success: true, message: 'Ticket procesado en QSystem' };
+});
+
 // API: SECURITY
 fastify.get('/api/security/events', async () => securityEvents);
 fastify.get('/api/security/firewall', async () => firewallRules);
@@ -529,7 +584,6 @@ fastify.get('/api/billing/invoices', async () => invoices);
 fastify.get('/api/billing/balance', async () => ({ balance: aurumBalance }));
 fastify.get('/api/billing/transactions', async () => walletTransactions);
 fastify.get('/api/billing/budget', async () => {
-  // Budget logic preserved
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
   const monthlyData = months.map((name, index) => ({ name, total: 0, items: [] }));
   return { monthlyData, annualTotal: 0, plannedExpenses };
@@ -631,8 +685,28 @@ fastify.post('/api/nodes/:id/reboot', async (request, reply) => {
   return { success: true, message: 'Request forwarded to ACC' };
 });
 
+// API: SUPPORT TICKETS (NUEVO NUCLEO LOGICO)
+fastify.get('/api/tickets', async () => tickets);
+fastify.post('/api/tickets', async (req) => {
+  const body = req.body as any;
+  const newTicket = {
+    id: `TKT-${Math.floor(Math.random() * 9000) + 1000}`,
+    subject: body.subject,
+    status: 'open',
+    priority: body.priority,
+    department: body.department,
+    date: new Date().toISOString().replace('T', ' ').substring(0, 16),
+    description: body.description
+  };
+  tickets.unshift(newTicket);
+  
+  // Si hay integración WAHA, podríamos notificar aquí también
+  console.log(`[AURUM SUPPORT] Nuevo ticket creado: ${newTicket.id}`);
+  
+  return { success: true, ticket: newTicket };
+});
+
 // API: OTROS
-fastify.get('/api/tickets', async () => []);
 fastify.get('/api/quotes', async () => quotes);
 fastify.get('/api/health', async () => ({ status: 'Titan Online', masterHub: 'Connected' }));
 fastify.post('/api/quotes/:id/invoice', async (request, reply) => {
