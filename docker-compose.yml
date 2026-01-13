@@ -9,10 +9,14 @@ services:
     environment:
       - DATABASE_URL=postgresql://qadmin:qpass@db:5432/qsystem
       - REDIS_URL=redis://cache:6379
+      # --- SYNC WITH SERVER.TS ---
       - WHM_API_TOKEN=${WHM_API_TOKEN}
-      - TITAN_SERVER_IP=${TITAN_SERVER_IP}
+      - TITAN_HOST=${TITAN_HOST}
+      - AURUM_SHARED_SECRET=${AURUM_SHARED_SECRET}
+      # ---------------------------
       - WAHA_URL=http://waha:3000
       - N8N_URL=http://n8n:5678
+      - NODE_ENV=production
     depends_on:
       - db
       - cache

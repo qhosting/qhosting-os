@@ -784,6 +784,7 @@ const start = async () => {
     const port = parseInt(process.env.PORT || '3000');
     await fastify.listen({ port, host: '0.0.0.0' });
     console.log(`[TITAN SYSTEM] Server active on port ${port} :: Mode: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`[TITAN SYSTEM] Connected to Target Node: ${TITAN_HOST}`);
   } catch (err) {
     fastify.log.error(err);
     (process as any).exit(1);

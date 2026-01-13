@@ -271,11 +271,18 @@ const StatCard: React.FC<{ title: string; value: string; icon: React.ReactNode; 
 
 const Dashboard: React.FC<{ userRole: UserRole }> = ({ userRole }) => {
   const [aurumSync, setAurumSync] = useState<'connected' | 'syncing' | 'error'>('connected');
+  // Local state for active hostname to display in UI
+  const [activeHost, setActiveHost] = useState<string>('titan.qhosting.net');
   
   // Simulated Live Metrics
   const [metrics, setMetrics] = useState({ cpu: 42, ram: 65, nvme: 28 });
   
   useEffect(() => {
+    // Fetch one node to get the real IP/Hostname from backend
+    fetch('/api/nodes').then(res => res.json()).then(data => {
+        if (data.length > 0) setActiveHost(data[0].ip);
+    }).catch(e => console.log("Dashboard sync error"));
+
     const interval = setInterval(() => {
        setMetrics({
           cpu: Math.floor(Math.random() * (60 - 30) + 30),
@@ -299,7 +306,7 @@ const Dashboard: React.FC<{ userRole: UserRole }> = ({ userRole }) => {
         </div>
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 text-[9px] font-black text-slate-600 uppercase tracking-widest">
-            <Wifi size={12} className="text-cyan-400" /> TIER-IV Link
+            <Wifi size={12} className="text-cyan-400" /> {activeHost} (TIER-IV)
           </div>
         </div>
       </div>
@@ -361,7 +368,7 @@ const Dashboard: React.FC<{ userRole: UserRole }> = ({ userRole }) => {
                   </div>
                   <div className="flex items-center gap-2">
                      <div className="w-2 h-2 bg-cyan-400 rounded-full shadow-[0_0_10px_rgba(34,211,238,0.8)]"></div>
-                     <span className="text-[9px] font-bold text-slate-300 uppercase">Satellite Node</span>
+                     <span className="text-[9px] font-bold text-slate-300 uppercase">Satellite: {activeHost}</span>
                   </div>
                </div>
             </div>
