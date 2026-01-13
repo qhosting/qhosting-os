@@ -38,6 +38,7 @@ interface Invoice {
   date: string;
   dueDate: string;
   method: string;
+  paymentUrl?: string; // Support for External Aurum Pay Link
 }
 
 interface Quote {
@@ -394,9 +395,21 @@ const BillingView: React.FC = () => {
                              </td>
                              <td className="px-8 py-6 text-right">
                                {inv.status !== 'paid' && (
-                                 <button onClick={() => handlePay(inv.id)} className="px-6 py-3 bg-cyan-400 text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest">
-                                   {isPaying === inv.id ? <RefreshCw className="animate-spin" size={14}/> : 'Pagar'}
-                                 </button>
+                                 inv.paymentUrl ? (
+                                   <a 
+                                     href={inv.paymentUrl} 
+                                     target="_blank" 
+                                     rel="noopener noreferrer"
+                                     className="px-6 py-3 bg-yellow-500 hover:bg-yellow-400 text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2"
+                                   >
+                                     <ExternalLink size={12} /> Pagar (Aurum)
+                                   </a>
+                                 ) : (
+                                   <button onClick={() => handlePay(inv.id)} className="px-6 py-3 bg-cyan-400 hover:bg-cyan-500 text-slate-950 rounded-xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2">
+                                     {isPaying === inv.id ? <RefreshCw className="animate-spin" size={14}/> : <Wallet size={12}/>}
+                                     {isPaying === inv.id ? '...' : 'Pagar (Saldo)'}
+                                   </button>
+                                 )
                                )}
                              </td>
                            </tr>

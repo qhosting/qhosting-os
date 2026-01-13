@@ -26,7 +26,8 @@ const worker = new Worker('provisioning', async (job: Job) => {
       },
       headers: {
         // En producción real, cada nodo debería tener su propio token almacenado en DB segura
-        'Authorization': `whm root:${process.env.WHM_API_TOKEN}`
+        // Utilizamos el Token de Producción "Q-SYSTEM" proporcionado
+        'Authorization': `whm root:${process.env.WHM_API_TOKEN || 'ULZ9P026CFSN5HVH31PKQ491Z12Q0HDT'}`
       },
       // Ignorar SSL self-signed en dev/test
       httpsAgent: new https.Agent({ rejectUnauthorized: false })

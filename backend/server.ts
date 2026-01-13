@@ -148,11 +148,11 @@ let hostingServices = [
     id: 'SRV-TITAN-01', 
     domain: 'empresa-demo.com', 
     plan: 'Titan Pro NVMe', 
-    ip: '192.168.101.45', 
+    ip: 'titan.qhosting.net', 
     status: 'active', 
     diskUsage: 45, 
     bandwidthUsage: 12, 
-    cpanelUrl: 'https://cpanel.empresa-demo.com',
+    cpanelUrl: 'https://titan.qhosting.net:2083',
     location: 'Miami (MIA-2)',
     ssl: true,
     backupStatus: 'success',
@@ -270,7 +270,7 @@ let satelliteNodes = [
   {
     id: 'TITAN-CPANEL-01',
     location: 'Miami (MIA-2)',
-    ip: '192.168.101.10',
+    ip: 'titan.qhosting.net', // Production Endpoint
     status: 'online',
     load: 45,
     ram: 64,
@@ -301,6 +301,46 @@ let satelliteNodes = [
     accounts: 310
   }
 ];
+
+// --- HELPER: AURUM PAY SYNC (Translated from PHP) ---
+async function syncInvoiceWithAurum(invoice: any, clientEmail: string = 'admin@qhosting.net') {
+  try {
+    console.log(`[AURUM PAY] Sincronizando factura local ${invoice.id} con Master Hub...`);
+    
+    // 1. Preparar Payload
+    const payload = {
+      externalInvoiceId: invoice.id,
+      clientEmail: clientEmail,
+      total: invoice.amount,
+      dueDate: invoice.dueDate,
+      items: [{
+        concept: invoice.concept,
+        quantity: 1,
+        price: invoice.amount
+      }]
+    };
+
+    // 2. Ejecutar Petición (Simulada para Demo)
+    // const endpoint = `${systemSettings.masterHubEndpoint}/billing/sync-invoice`;
+    // const response = await axios.post(endpoint, payload, {
+    //    headers: {
+    //      'Content-Type': 'application/json',
+    //      'x-api-key': systemSettings.aurumApiKey,
+    //      'x-satellite-id': 'QHOSTING-NODE-01'
+    //    }
+    // });
+    
+    // 3. Simular Respuesta Exitosa de Aurum
+    const mockPaymentUrl = `https://pay.aurumcapital.mx/checkout/${invoice.id}?token=${Math.random().toString(36).substring(7)}`;
+    
+    console.log(`[AURUM PAY] Enlace generado: ${mockPaymentUrl}`);
+    return mockPaymentUrl;
+
+  } catch (error) {
+    console.error("[AURUM PAY ERROR]", error);
+    return null;
+  }
+}
 
 // --- API ENDPOINTS ---
 
@@ -714,6 +754,7 @@ fastify.post('/api/quotes/:id/invoice', async (request, reply) => {
    const quoteIndex = quotes.findIndex(q => q.id === id);
    if (quoteIndex === -1) return reply.status(404).send({ error: 'Propuesta no encontrada' });
    const quote = quotes[quoteIndex];
+   
    const newInvoice = {
      id: id.replace('QT', 'INV'),
      concept: quote.concept,
@@ -723,6 +764,13 @@ fastify.post('/api/quotes/:id/invoice', async (request, reply) => {
      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
      method: 'Pending Gateway'
    };
+   
+   // --- AURUM PAY SYNC INTEGRATION ---
+   const paymentLink = await syncInvoiceWithAurum(newInvoice);
+   if (paymentLink) {
+       (newInvoice as any).paymentUrl = paymentLink;
+   }
+   
    invoices.unshift(newInvoice);
    quotes.splice(quoteIndex, 1);
    return { success: true, invoice: newInvoice };
