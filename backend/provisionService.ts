@@ -12,6 +12,15 @@ const worker = new Worker('provisioning', async (job: Job) => {
   // Los datos ahora incluyen targetIp y whmPackage dinámicos desde el Catálogo
   const { domain, username, targetIp, whmPackage, contactEmail } = job.data;
 
+  // --- SECURITY ENFORCEMENT ---
+  // DevOps Best Practice: Fail fast if secrets are missing.
+  const whmToken = process.env.WHM_API_TOKEN;
+  if (!whmToken) {
+      const errorMsg = '[CRITICAL] WHM_API_TOKEN is missing in environment variables. Provisioning aborted to prevent auth failure.';
+      console.error(errorMsg);
+      throw new Error(errorMsg);
+  }
+
   console.log(`[TITAN WORKER] Provisioning account for ${domain} on node ${targetIp} using package ${whmPackage}...`);
 
   try {
@@ -25,11 +34,10 @@ const worker = new Worker('provisioning', async (job: Job) => {
         contactemail: contactEmail || 'admin@qhosting.net'
       },
       headers: {
-        // En producción real, cada nodo debería tener su propio token almacenado en DB segura
-        // Utilizamos el Token de Producción "Q-SYSTEM" proporcionado
-        'Authorization': `whm root:${process.env.WHM_API_TOKEN || 'ULZ9P026CFSN5HVH31PKQ491Z12Q0HDT'}`
+        // PRODUCTION SECURE HEADER
+        'Authorization': `whm root:${whmToken}`
       },
-      // Ignorar SSL self-signed en dev/test
+      // Ignorar SSL self-signed en dev/test (cPanel usa certificados self-signed por defecto en hostname IP)
       httpsAgent: new https.Agent({ rejectUnauthorized: false })
     });
 

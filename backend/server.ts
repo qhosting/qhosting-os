@@ -21,6 +21,9 @@ const DATABASE_URL = process.env.DATABASE_URL || 'postgres://postgres:7545f09686
 const REDIS_URL = process.env.REDIS_URL || 'redis://default:5faf81de3571e8b7146c@qhosting_redis:6379';
 const AURUM_SECRET = process.env.AURUM_SHARED_SECRET || 'aurum_satellite_master_key';
 
+// Hostname Centralizado (Permite cambios rápidos en Easypanel)
+const TITAN_HOST = process.env.TITAN_HOST || 'titan.qhosting.net';
+
 // Conexión Redis
 const redisConnection = new IORedis(REDIS_URL, {
   maxRetriesPerRequest: null
@@ -148,11 +151,11 @@ let hostingServices = [
     id: 'SRV-TITAN-01', 
     domain: 'empresa-demo.com', 
     plan: 'Titan Pro NVMe', 
-    ip: 'titan.qhosting.net', 
+    ip: TITAN_HOST, 
     status: 'active', 
     diskUsage: 45, 
     bandwidthUsage: 12, 
-    cpanelUrl: 'https://titan.qhosting.net:2083',
+    cpanelUrl: `https://${TITAN_HOST}:2083`,
     location: 'Miami (MIA-2)',
     ssl: true,
     backupStatus: 'success',
@@ -270,7 +273,7 @@ let satelliteNodes = [
   {
     id: 'TITAN-CPANEL-01',
     location: 'Miami (MIA-2)',
-    ip: 'titan.qhosting.net', // Production Endpoint
+    ip: TITAN_HOST, // Production Endpoint
     status: 'online',
     load: 45,
     ram: 64,
