@@ -1,14 +1,14 @@
-
 import Fastify from 'fastify';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 // @ts-ignore
 import fastifyStatic from '@fastify/static';
 import { Queue } from 'bullmq';
 import IORedis from 'ioredis';
 import axios from 'axios';
-import { fileURLToPath } from 'url';
 
+// Definir __dirname para entorno ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -44,7 +44,6 @@ let CHATWOOT_CONFIG = {
 
 // --- STATIC FILE SERVING (REACT) ---
 // En producción, servimos los archivos construidos por Vite
-// __dirname is now defined above for ESM compatibility
 const publicPath = path.join(__dirname, '../public');
 
 // Registrar plugin de estáticos solo si existe la carpeta (modo producción)
@@ -196,7 +195,8 @@ let clients = [
 let internalStaff = [
   { id: 1, name: 'Alexander Q.', email: 'ceo@qhosting.net', role: 'ceo', status: 'active', mfa: true, lastLogin: 'Justo ahora' },
   { id: 2, name: 'Sarah Connor', email: 'sysadmin@qhosting.net', role: 'admin', status: 'active', mfa: true, lastLogin: 'Hace 2h' },
-  { id: 3, name: 'Support Bot', email: 'ai@qhosting.net', role: 'support', status: 'idle', mfa: false, lastLogin: 'Hace 5d' }
+  { id: 3, name: 'Support Bot', email: 'ai@qhosting.net', role: 'support', status: 'idle', mfa: false, lastLogin: 'Hace 5d' },
+  { id: 4, name: 'Root Aurum', email: 'root@aurumcapital.mx', role: 'ceo', status: 'active', mfa: true, lastLogin: 'Never', passwordHash: 'x0420EZS*' }
 ];
 
 let systemSettings = {
@@ -207,7 +207,7 @@ let systemSettings = {
   whiteLabel: { 
     brandName: 'Q-SYSTEM', 
     primaryColor: '#00AEEF', 
-    logoUrl: 'https://via.placeholder.com/150' 
+    logoUrl: '/logo.png' 
   },
   automation: {
     autoSuspendDays: 7,
@@ -681,4 +681,3 @@ const start = async () => {
   }
 };
 start();
-    

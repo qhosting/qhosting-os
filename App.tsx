@@ -72,8 +72,8 @@ const App: React.FC = () => {
         />
       );
       case 'login': return <LoginPage onLogin={handleLogin} />;
-      // New Services View (Combines List + Order Wizard)
-      case 'services': return <ServicesView />;
+      // New Services View (Combines List + Order Wizard) - SECURITY UPDATE: Passed userRole
+      case 'services': return <ServicesView userRole={currentUser.role} />;
       case 'domains': return <DomainsView />;
       case 'users': return <UsersView />;
       case 'infrastructure': return <NodesView />;
@@ -109,19 +109,21 @@ const App: React.FC = () => {
             {isSidebarOpen ? <ChevronLeft size={18} /> : <ChevronRight size={18} />}
           </button>
 
-          <div className="p-8 flex items-center gap-5">
-            <div className="min-w-[48px] w-12 h-12 bg-cyan-400 rounded-2xl flex items-center justify-center shadow-cyan-glow transform -rotate-12">
-              <Server className="text-slate-950" size={28} />
-            </div>
-            {isSidebarOpen && (
-              <div className="flex flex-col">
-                <span className="font-black text-2xl tracking-tighter text-white italic">Q-SYSTEM</span>
-                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] mt-1">Institutional Node</span>
+          <div className="p-8 flex items-center justify-center">
+            {isSidebarOpen ? (
+              <div className="flex flex-col items-center">
+                <img src="/logo.png" alt="QHOSTING" className="h-14 object-contain drop-shadow-[0_0_15px_rgba(0,174,239,0.3)]" />
+                <span className="text-[8px] font-black text-slate-500 uppercase tracking-[0.3em] mt-3">Institutional Node</span>
+              </div>
+            ) : (
+              <div className="w-12 h-12 overflow-hidden rounded-xl bg-slate-900 flex items-center justify-center">
+                 {/* Intent to show only Icon part of logo if collapsed, using object positioning */}
+                 <img src="/logo.png" alt="Q" className="h-20 max-w-none object-cover object-left -ml-2" />
               </div>
             )}
           </div>
 
-          <nav className="flex-1 px-4 space-y-2 mt-10">
+          <nav className="flex-1 px-4 space-y-2 mt-4">
             {filteredMenuItems.map((item) => (
               <button 
                 key={item.id}

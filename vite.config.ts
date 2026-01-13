@@ -11,7 +11,8 @@ export default defineConfig({
   plugins: [react()],
   root: '.',
   build: {
-    outDir: 'dist/public',
+    // IMPORTANTE: El servidor espera los archivos estáticos aquí
+    outDir: 'dist/public', 
     emptyOutDir: true,
   },
   resolve: {

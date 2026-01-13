@@ -36,14 +36,12 @@ const LoginPage: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
           
           {/* Header Institucional */}
           <div className="flex flex-col items-center mb-10 text-center">
-            <div className="relative mb-6">
-              <div className="absolute -inset-4 bg-cyan-400/20 blur-xl rounded-full"></div>
-              <div className="w-20 h-20 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-3xl flex items-center justify-center text-slate-950 shadow-2xl transform -rotate-6 hover:rotate-0 transition-transform duration-500 cursor-none">
-                <ShieldCheck size={40} strokeWidth={2.5} />
-              </div>
+            <div className="relative mb-6 group">
+              <div className="absolute -inset-4 bg-cyan-400/20 blur-xl rounded-full opacity-50 group-hover:opacity-80 transition-opacity"></div>
+              <img src="/logo.png" alt="QHOSTING" className="h-16 object-contain relative z-10" />
             </div>
-            <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic leading-none">
-              Q-SYSTEM <span className="text-cyan-400 block mt-1 not-italic tracking-widest text-[10px] opacity-70">Access Portal</span>
+            <h1 className="text-xl font-black text-white tracking-widest uppercase italic leading-none">
+              Access Portal
             </h1>
           </div>
 

@@ -7,6 +7,7 @@ import {
   LayoutList, Save, Trash2, Package
 } from 'lucide-react';
 import OrderWizard from './OrderWizard';
+import { UserRole } from '../types';
 
 interface HostingService {
   id: string;
@@ -41,7 +42,7 @@ interface NodeOption {
   software: string;
 }
 
-const ServicesView: React.FC = () => {
+const ServicesView: React.FC<{ userRole: UserRole }> = ({ userRole }) => {
   const [viewState, setViewState] = useState<'dashboard' | 'wizard'>('dashboard');
   const [activeTab, setActiveTab] = useState<'services' | 'catalog'>('services');
   
@@ -132,6 +133,9 @@ const ServicesView: React.FC = () => {
     return <OrderWizard onComplete={() => { setViewState('dashboard'); fetchData(); }} onCancel={() => setViewState('dashboard')} />;
   }
 
+  // Security check for Admin Buttons
+  const isAdmin = userRole === UserRole.CEO || userRole === UserRole.ADMIN;
+
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -154,12 +158,16 @@ const ServicesView: React.FC = () => {
                <LayoutList size={14} /> Catálogo
              </button>
           </div>
-          <button 
-            onClick={() => setViewState('wizard')}
-            className="bg-cyan-400 hover:bg-cyan-500 text-slate-950 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-cyan-glow transition-all active:scale-95 ml-4"
-          >
-            <Plus size={16} /> Despliegue Manual
-          </button>
+          
+          {/* SECURITY: Only Admins/CEO can see Manual Deployment */}
+          {isAdmin && (
+            <button 
+              onClick={() => setViewState('wizard')}
+              className="bg-cyan-400 hover:bg-cyan-500 text-slate-950 px-8 py-4 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-3 shadow-cyan-glow transition-all active:scale-95 ml-4"
+            >
+              <Plus size={16} /> Despliegue Manual
+            </button>
+          )}
         </div>
       </div>
 
@@ -171,7 +179,7 @@ const ServicesView: React.FC = () => {
              </div>
              <h3 className="text-2xl font-black text-white italic uppercase tracking-tighter mb-4">Sin Servicios Activos</h3>
              <p className="text-slate-500 text-sm max-w-md leading-relaxed mb-8">
-               No se detectan nodos Titan vinculados a su identidad institucional. Inicie un despliegue para comenzar.
+               No se detectan nodos Titan vinculados a su identidad institucional. {isAdmin ? 'Inicie un despliegue manual.' : 'Contacte a soporte para aprovisionamiento.'}
              </p>
           </div>
         ) : (
@@ -263,23 +271,29 @@ const ServicesView: React.FC = () => {
                  <h3 className="text-2xl font-black text-white uppercase italic tracking-tighter">Catálogo Maestro</h3>
                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Productos vinculados a Nodos Titan</p>
               </div>
-              <button 
-                onClick={() => setIsPlanModalOpen(true)}
-                className="bg-slate-900 border border-slate-800 text-slate-400 hover:text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 transition-all"
-              >
-                <Plus size={14} /> Nuevo Plan Maestro
-              </button>
+              
+              {/* Only Admins can create plans */}
+              {isAdmin && (
+                <button 
+                  onClick={() => setIsPlanModalOpen(true)}
+                  className="bg-slate-900 border border-slate-800 text-slate-400 hover:text-white px-6 py-3 rounded-2xl font-black uppercase text-[10px] tracking-widest flex items-center gap-2 transition-all"
+                >
+                  <Plus size={14} /> Nuevo Plan Maestro
+                </button>
+              )}
            </div>
 
            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {plans.map(plan => (
                  <div key={plan.id} className="titan-glass p-8 rounded-[2.5rem] border border-slate-800/50 hover:border-cyan-400/30 transition-all group relative">
-                    <button 
-                      onClick={() => handleDeletePlan(plan.id)}
-                      className="absolute top-6 right-6 text-slate-600 hover:text-red-400 transition-colors"
-                    >
-                       <Trash2 size={16} />
-                    </button>
+                    {isAdmin && (
+                      <button 
+                        onClick={() => handleDeletePlan(plan.id)}
+                        className="absolute top-6 right-6 text-slate-600 hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    )}
                     
                     <div className="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-slate-500 border border-slate-800 mb-6">
                        <Package size={24} />
@@ -417,7 +431,6 @@ const ServicesView: React.FC = () => {
       {selectedService && (
          <div className="fixed inset-y-0 right-0 w-full md:w-[600px] z-[200] animate-in slide-in-from-right duration-500 shadow-2xl">
             <div className="h-full titan-glass border-l border-slate-800 bg-slate-950/90 backdrop-blur-xl flex flex-col p-10 overflow-y-auto custom-scrollbar">
-               {/* ... (Keep existing detail drawer logic) ... */}
                <div className="flex justify-between items-start mb-12">
                   <div className="flex items-center gap-5">
                      <div className="w-16 h-16 bg-cyan-400 rounded-[1.5rem] flex items-center justify-center text-slate-950 shadow-cyan-glow">

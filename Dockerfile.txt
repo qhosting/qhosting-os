@@ -1,0 +1,40 @@
+
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies (including devDependencies for build)
+RUN npm ci
+
+# Copy source code
+COPY . .
+
+# Build Backend (TSC) and Frontend (Vite)
+# NOTE: Ensure "npm run build" runs "tsc && vite build" in package.json
+RUN npm run build
+
+# Stage 2: Runner
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install production dependencies only
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy compiled backend and built frontend from builder
+COPY --from=builder /app/dist ./dist
+
+# Environment variables (Defaults, override in Easypanel)
+ENV NODE_ENV=production
+ENV PORT=3000
+
+# Expose port
+EXPOSE 3000
+
+# Start server
+CMD ["node", "dist/backend/server.js"]

@@ -3,11 +3,11 @@
   "name": "q-system-titan",
   "version": "2.5.0",
   "description": "QHOSTING.NET Titan Infrastructure Management",
-  "main": "dist/server.js",
+  "main": "dist/backend/server.js",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "start": "node dist/server.js",
+    "start": "node dist/backend/server.js",
     "server:dev": "ts-node backend/server.ts"
   },
   "dependencies": {
