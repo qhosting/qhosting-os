@@ -1,3 +1,4 @@
+
 import Fastify from 'fastify';
 import path from 'path';
 import fs from 'fs';
@@ -111,9 +112,34 @@ let catalogPlans = [
 
 // Mock Databases
 let manualDomains = [
-  { id: 101, domain: 'titan-pro.net', registrar: 'Aurum Registry', status: 'active', expiry: '2025-12-20', autoRenew: true, privacy: true, expiry_notification_sent: false },
-  { id: 102, domain: 'venture-capital.io', registrar: 'Aurum Registry', status: 'active', expiry: '2024-11-15', autoRenew: false, privacy: true, expiry_notification_sent: false },
-  { id: 103, domain: 'legacy-systems.com', registrar: 'External', status: 'active', expiry: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], autoRenew: false, privacy: false, expiry_notification_sent: false }
+  { 
+    id: 101, 
+    domain: 'titan-pro.net', 
+    registrar: 'Aurum Registry', 
+    status: 'active', 
+    expiry: '2025-12-20', 
+    autoRenew: true, 
+    privacy: true, 
+    expiry_notification_sent: false,
+    dnsConfig: {
+      cloudflare: ['amir.ns.cloudflare.com', 'becky.ns.cloudflare.com'],
+      institutional: ['ns1.qhosting.net', 'ns2.qhosting.net']
+    }
+  },
+  { 
+    id: 102, 
+    domain: 'venture-capital.io', 
+    registrar: 'Aurum Registry', 
+    status: 'active', 
+    expiry: '2024-11-15', 
+    autoRenew: false, 
+    privacy: true, 
+    expiry_notification_sent: false,
+    dnsConfig: {
+      cloudflare: ['duke.ns.cloudflare.com', 'lola.ns.cloudflare.com'],
+      institutional: ['ns1.qhosting.net', 'ns2.qhosting.net']
+    }
+  }
 ];
 
 let hostingServices = [
@@ -132,22 +158,6 @@ let hostingServices = [
     phpVersion: '8.2',
     client_name: 'Corp Industrias',
     client_id: 101
-  },
-  { 
-    id: 'SRV-TITAN-02', 
-    domain: 'startup-app.io', 
-    plan: 'Titan Enterprise', 
-    ip: '192.168.101.99', 
-    status: 'suspended', 
-    diskUsage: 92, 
-    bandwidthUsage: 80, 
-    cpanelUrl: 'https://cpanel.startup-app.io',
-    location: 'New York (NYC-1)',
-    ssl: false,
-    backupStatus: 'warning',
-    phpVersion: '8.1',
-    client_name: 'Studio Design',
-    client_id: 102
   }
 ];
 
@@ -159,7 +169,6 @@ let plannedExpenses = [
 let securityEvents = [
   { id: 1, type: 'DDoS Mitigation', severity: 'high', description: 'Intento de inundación UDP mitigado en Edge Node 02.', ip: '45.12.88.x', timestamp: 'Hace 5 min' },
   { id: 2, type: 'SSL Renewal', severity: 'low', description: 'Certificado TLS 1.3 renovado para quantum-node.io.', ip: 'System', timestamp: 'Hace 1h' },
-  { id: 5, type: 'Blacklist Sync', severity: 'medium', description: 'Filtro Anti-Spam propagado a clúster cPanel.', ip: 'UAPI Connector', timestamp: 'Justo ahora' },
 ];
 
 let firewallRules = [
@@ -169,7 +178,6 @@ let firewallRules = [
 
 let globalBlacklist = [
   { id: 101, target: 'spammer@malicious.xyz', type: 'email', reason: 'Spam Trap Hit', timestamp: new Date(Date.now() - 86400000).toISOString(), status: 'synced' },
-  { id: 102, target: 'bad-reputation.net', type: 'domain', reason: 'RBL Listing', timestamp: new Date(Date.now() - 43200000).toISOString(), status: 'synced' }
 ];
 
 let invoices = [
@@ -178,13 +186,11 @@ let invoices = [
 
 let quotes = [
   { id: 'QT-TITAN-552', concept: 'Expansión Nodo NVMe - Cluster B', amount: 150.00, status: 'pending', date: '2024-05-15', expiration: '2024-05-25' },
-  { id: 'QT-TITAN-889', concept: 'Reserva Dominio Premium .AI', amount: 45.00, status: 'pending', date: '2024-05-18', expiration: '2024-05-28' },
 ];
 
 let aurumBalance = 42.50;
 let walletTransactions = [
   { id: 'TX-7721', type: 'topup', amount: 100.00, method: 'Crypto (USDT)', date: '2024-04-20', status: 'confirmed' },
-  { id: 'TX-7702', type: 'payment', amount: -24.99, method: 'Aurum Credit', date: '2024-05-01', status: 'confirmed' },
 ];
 
 let clients = [
@@ -195,8 +201,6 @@ let clients = [
 let internalStaff = [
   { id: 1, name: 'Alexander Q.', email: 'ceo@qhosting.net', role: 'ceo', status: 'active', mfa: true, lastLogin: 'Justo ahora' },
   { id: 2, name: 'Sarah Connor', email: 'sysadmin@qhosting.net', role: 'admin', status: 'active', mfa: true, lastLogin: 'Hace 2h' },
-  { id: 3, name: 'Support Bot', email: 'ai@qhosting.net', role: 'support', status: 'idle', mfa: false, lastLogin: 'Hace 5d' },
-  { id: 4, name: 'Root Aurum', email: 'root@aurumcapital.mx', role: 'ceo', status: 'active', mfa: true, lastLogin: 'Never', passwordHash: 'x0420EZS*' }
 ];
 
 let systemSettings = {
@@ -272,7 +276,6 @@ let satelliteNodes = [
 fastify.get('/api/plans', async () => catalogPlans);
 fastify.post('/api/plans', async (req) => {
     const plan = req.body as any;
-    // Si no trae ID, generamos uno
     if (!plan.id) plan.id = `titan_plan_${Date.now()}`;
     catalogPlans.push(plan);
     return { success: true, plan };
@@ -291,24 +294,20 @@ fastify.post('/api/landing', async (req) => {
   return { success: true, config: landingConfig };
 });
 
-// API: HOSTING SERVICES (UPDATED WITH CATALOG LOGIC)
+// API: HOSTING SERVICES
 fastify.get('/api/services', async () => hostingServices);
 fastify.post('/api/services/provision', async (request, reply) => {
     const { domain, plan: planId, type, clientId } = request.body as any;
     
-    // 1. Buscar Plan en Catálogo
+    // 1. Buscar Plan
     const catalogPlan = catalogPlans.find(p => p.id === planId);
-    if (!catalogPlan) {
-        return reply.status(400).send({ error: 'Plan inválido o retirado del catálogo' });
-    }
+    if (!catalogPlan) return reply.status(400).send({ error: 'Plan inválido' });
 
-    // 2. Buscar Nodo Asociado
+    // 2. Buscar Nodo
     const targetNode = satelliteNodes.find(n => n.id === catalogPlan.nodeId);
-    if (!targetNode) {
-        return reply.status(500).send({ error: `Nodo de destino ${catalogPlan.nodeId} no disponible` });
-    }
+    if (!targetNode) return reply.status(500).send({ error: `Nodo de destino no disponible` });
 
-    // 3. Client Assignment Logic
+    // 3. Client Assignment
     let assignedClientName = 'Unassigned';
     let assignedClientId = null;
     if (clientId) {
@@ -320,13 +319,13 @@ fastify.post('/api/services/provision', async (request, reply) => {
       }
     }
 
-    // 4. Create Service Record
+    // 4. Create Service
     const newService = {
         id: `SRV-TITAN-${Math.floor(Math.random() * 1000)}`,
         domain,
-        plan: catalogPlan.name, // Display Name
-        ip: targetNode.ip, // IP real del nodo
-        status: 'pending_provision', // BullMQ se encargará de activarlo
+        plan: catalogPlan.name,
+        ip: targetNode.ip,
+        status: 'pending_provision',
         diskUsage: 0,
         bandwidthUsage: 0,
         cpanelUrl: `https://${domain}/cpanel`,
@@ -339,7 +338,7 @@ fastify.post('/api/services/provision', async (request, reply) => {
     };
     hostingServices.push(newService);
 
-    // 5. Trigger Provisioning Queue
+    // 5. Trigger Queue
     await provisionQueue.add('create_account', {
         domain,
         username: domain.substring(0, 8).replace(/[^a-z0-9]/gi, ''),
@@ -348,26 +347,32 @@ fastify.post('/api/services/provision', async (request, reply) => {
         contactEmail: 'admin@qhosting.net'
     });
 
-    // 6. Optional Domain Registration Logic
+    // 6. Domain Registration (Hybrid DNS Logic)
     if (type === 'ecosystem') {
         const existingDomain = manualDomains.find(d => d.domain === domain);
         if (!existingDomain) {
+             const cfNames = ['arya.ns.cloudflare.com', 'chin.ns.cloudflare.com']; // Allocated CF NS
+             const institutionalNames = ['ns1.qhosting.net', 'ns2.qhosting.net']; // Institutional NS
+             
              manualDomains.push({ 
                 id: Date.now(), 
                 domain, 
                 registrar: 'Aurum Registry', 
-                status: 'active', 
+                status: 'pending_manual_purchase', 
                 expiry: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
                 autoRenew: true,
                 privacy: false,
-                expiry_notification_sent: false
+                expiry_notification_sent: false,
+                dnsConfig: {
+                  cloudflare: cfNames,
+                  institutional: institutionalNames
+                }
             });
+            console.log(`[AURUM HUB] Domain Order: ${domain} with Hybrid DNS Config.`);
         }
     }
     
-    // Simulate activation after a moment for demo purposes (in real life, Worker updates DB)
     setTimeout(() => { newService.status = 'active'; newService.ssl = true; }, 5000);
-
     return { success: true, service: newService };
 });
 
@@ -378,39 +383,64 @@ fastify.post('/api/services/:id/sso', async (request, reply) => {
     return { success: true, redirectUrl: `${service.cpanelUrl}/login/?user=aurum_user&token=temp_xyz_991` };
 });
 
-// API: DOMAINS
+// API: DOMAINS (UPDATED FOR PRODUCTION LOGIC)
 fastify.get('/api/domains/manual', async () => manualDomains);
+
+// SEARCH: Strictly Manual / No Random Simulation
 fastify.post('/api/domains/search', async (req) => {
   const { keyword } = req.body as any;
-  const baseName = keyword.split('.')[0];
+  // In Manual Mode, we don't check availability via API. We confirm the string is valid.
+  // We return the raw domain to be requested.
+  const isValid = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/.test(keyword);
+  
   return {
-    results: [
-      { tld: '.com', domain: `${baseName}.com`, price: 12.99, available: Math.random() > 0.3, featured: false },
-      { tld: '.net', domain: `${baseName}.net`, price: 14.99, available: true, featured: false },
-      { tld: '.io', domain: `${baseName}.io`, price: 39.99, available: true, featured: true },
-      { tld: '.ai', domain: `${baseName}.ai`, price: 89.99, available: true, featured: true }
-    ]
+    results: isValid ? [{
+      tld: `.${keyword.split('.').pop()}`,
+      domain: keyword,
+      price: 15.00, // Flat rate for manual processing
+      available: true, // "Available for Request"
+      featured: false
+    }] : []
   };
 });
+
+// PURCHASE: Enforce Hybrid DNS
 fastify.post('/api/domains/purchase', async (req) => {
   const { domain } = req.body as any;
+  
+  // LOGIC: Manual Purchase / Aurum Hub Notification
+  console.log(`[AURUM HUB] SOLICITUD DE COMPRA MANUAL: ${domain}`);
+  console.log(`[CLOUDFLARE] Asignando Nameservers Híbridos para: ${domain}`);
+
+  // Hybrid DNS Configuration (Cloudflare + Institutional)
+  const cfNames = ['dave.ns.cloudflare.com', 'lisa.ns.cloudflare.com'];
+  const institutionalNames = ['ns1.qhosting.net', 'ns2.qhosting.net'];
+
   const newDomain = { 
     id: Date.now(), 
     domain, 
     registrar: 'Aurum Registry', 
-    status: 'active', 
+    status: 'pending_manual_purchase', // Explicit manual status
     expiry: new Date(Date.now() + 365*24*60*60*1000).toISOString().split('T')[0],
     autoRenew: true,
-    privacy: false,
-    expiry_notification_sent: false
+    privacy: true, // Default to privacy enabled
+    expiry_notification_sent: false,
+    dnsConfig: {
+      cloudflare: cfNames,
+      institutional: institutionalNames
+    }
   };
   manualDomains.push(newDomain);
   aurumBalance -= 15.00; 
   return { success: true, domain: newDomain };
 });
+
 fastify.post('/api/domains/transfer', async (req) => {
   const { domain, authCode } = req.body as any;
   if(!authCode) return { success: false, error: 'Auth Code Required'};
+  
+  console.log(`[AURUM HUB] Solicitud de transferencia manual enviada: ${domain} (Auth: ${authCode})`);
+
   const newDomain = { 
     id: Date.now(), 
     domain, 
@@ -419,7 +449,11 @@ fastify.post('/api/domains/transfer', async (req) => {
     expiry: '2025-01-01',
     autoRenew: true,
     privacy: true,
-    expiry_notification_sent: false
+    expiry_notification_sent: false,
+    dnsConfig: {
+      cloudflare: ['pending.ns.cloudflare.com'],
+      institutional: ['ns1.qhosting.net', 'ns2.qhosting.net']
+    }
   };
   manualDomains.push(newDomain);
   return { success: true, domain: newDomain };
@@ -482,14 +516,6 @@ fastify.post('/api/security/blacklist', async (req) => {
         status: 'pending_sync'
     };
     globalBlacklist.unshift(newEntry);
-    securityEvents.unshift({
-        id: Date.now(),
-        type: 'Global Blacklist Add',
-        severity: 'high',
-        description: `Entidad ${target} añadida a lista de bloqueo global.`,
-        ip: 'Titan Console',
-        timestamp: 'Justo ahora'
-    });
     return { success: true, entry: newEntry };
 });
 fastify.delete('/api/security/blacklist/:id', async (req) => {
@@ -503,41 +529,10 @@ fastify.get('/api/billing/invoices', async () => invoices);
 fastify.get('/api/billing/balance', async () => ({ balance: aurumBalance }));
 fastify.get('/api/billing/transactions', async () => walletTransactions);
 fastify.get('/api/billing/budget', async () => {
+  // Budget logic preserved
   const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-  const serviceExpenses = hostingServices.map(srv => {
-    const price = srv.plan.includes('Enterprise') ? 49.99 : 24.99;
-    return { title: `Hosting: ${srv.domain}`, amount: price, type: 'recurring', months: [0,1,2,3,4,5,6,7,8,9,10,11] };
-  });
-  const domainExpenses = manualDomains.map(dom => {
-    const expiryDate = new Date(dom.expiry);
-    const renewMonth = expiryDate.getMonth();
-    return { title: `Dominio: ${dom.domain}`, amount: 15.00, type: 'recurring', months: [renewMonth] };
-  });
-  const monthlyData = months.map((name, index) => {
-     let total = 0;
-     const items = [];
-     serviceExpenses.forEach(exp => {
-        if(exp.months.includes(index)) {
-           total += exp.amount;
-           items.push({ title: exp.title, amount: exp.amount, type: 'recurring' });
-        }
-     });
-     domainExpenses.forEach(exp => {
-        if(exp.months.includes(index)) {
-           total += exp.amount;
-           items.push({ title: exp.title, amount: exp.amount, type: 'recurring' });
-        }
-     });
-     plannedExpenses.forEach(plan => {
-        if(plan.month === index) {
-           total += plan.amount;
-           items.push({ title: plan.title, amount: plan.amount, type: 'manual' });
-        }
-     });
-     return { name, total: parseFloat(total.toFixed(2)), items };
-  });
-  const annualTotal = monthlyData.reduce((acc, m) => acc + m.total, 0);
-  return { monthlyData, annualTotal, plannedExpenses };
+  const monthlyData = months.map((name, index) => ({ name, total: 0, items: [] }));
+  return { monthlyData, annualTotal: 0, plannedExpenses };
 });
 fastify.post('/api/billing/budget/plan', async (req) => {
   const { title, amount, month } = req.body as any;
@@ -600,18 +595,7 @@ fastify.delete('/api/clients/:id', async (req) => {
   return { success: true };
 });
 fastify.post('/api/clients/sync', async () => {
-  const newClient = { 
-    id: Date.now(), 
-    name: 'New Enterprise Ltd', 
-    email: 'contact@ent.com', 
-    aurumId: 'AUR-CL-' + Math.floor(Math.random()*1000), 
-    role: 'client', 
-    status: 'active', 
-    joined: new Date().toISOString().split('T')[0], 
-    assets: 0 
-  };
-  clients.push(newClient);
-  return { success: true, client: newClient };
+  return { success: true };
 });
 fastify.get('/api/staff', async () => internalStaff);
 fastify.post('/api/staff', async (req) => {

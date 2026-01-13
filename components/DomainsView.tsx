@@ -3,7 +3,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Globe, Plus, Search, RefreshCw, ShieldCheck, Clock, AlertCircle, ChevronRight, 
   ExternalLink, Trash2, Database, Lock, Settings2, ShoppingCart, ArrowRightLeft, 
-  CheckCircle2, XCircle, Key, Activity, Sparkles, X, Shield 
+  CheckCircle2, XCircle, Key, Activity, Sparkles, X, Shield, Cloud, Copy, Server
 } from 'lucide-react';
 
 interface Domain {
@@ -14,6 +14,10 @@ interface Domain {
   expiry: string;
   autoRenew: boolean;
   privacy: boolean;
+  dnsConfig?: {
+    cloudflare: string[];
+    institutional: string[];
+  };
 }
 
 interface SearchResult {
@@ -77,7 +81,7 @@ const DomainsView: React.FC = () => {
   };
 
   const handlePurchase = async (domainResult: SearchResult) => {
-    if(!confirm(`¿Confirmar adquisición de activo digital ${domainResult.domain} por $${domainResult.price}?`)) return;
+    if(!confirm(`¿Confirmar registro de ${domainResult.domain} por $${domainResult.price}?`)) return;
     try {
        const res = await fetch('/api/domains/purchase', {
          method: 'POST',
@@ -85,7 +89,7 @@ const DomainsView: React.FC = () => {
          body: JSON.stringify({ domain: domainResult.domain })
        });
        if (res.ok) {
-         alert("Activo digital añadido al portafolio Titan.");
+         alert("Orden de registro recibida correctamente. El activo aparecerá en su portafolio en breves momentos mientras se propagan los DNS.");
          setMarketQuery('');
          setMarketResults([]);
          setActiveTab('portfolio');
@@ -126,9 +130,21 @@ const DomainsView: React.FC = () => {
     if (selectedDomain?.id === id) setSelectedDomain(null);
   };
 
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    // Could add toast here
+  };
+
   const filteredDomains = useMemo(() => {
     return domains.filter(d => d.domain.toLowerCase().includes(searchTerm.toLowerCase()));
   }, [domains, searchTerm]);
+
+  const getStatusLabel = (status: string) => {
+    if (status === 'active') return 'Activo';
+    if (status === 'pending_manual_purchase') return 'Procesando Activación';
+    if (status === 'pending_transfer') return 'Transferencia en Curso';
+    return status;
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20 relative">
@@ -150,7 +166,7 @@ const DomainsView: React.FC = () => {
              onClick={() => setActiveTab('marketplace')}
              className={`px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all ${activeTab === 'marketplace' ? 'bg-cyan-400 text-slate-950 shadow-cyan-glow' : 'text-slate-500 hover:text-white'}`}
            >
-             <ShoppingCart size={14} /> Marketplace
+             <Plus size={14} /> Registrar Dominio
            </button>
            <button 
              onClick={() => setActiveTab('transfers')}
@@ -216,7 +232,7 @@ const DomainsView: React.FC = () => {
                                  : 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20'
                                }`}>
                                   {d.status === 'active' ? <ShieldCheck size={12}/> : <Clock size={12}/>}
-                                  {d.status === 'active' ? 'Protegido' : 'Transferencia'}
+                                  {getStatusLabel(d.status)}
                                </span>
                             </td>
                             <td className="px-8 py-6 text-right">
@@ -234,7 +250,7 @@ const DomainsView: React.FC = () => {
               </div>
            </div>
 
-           {/* Details Drawer */}
+           {/* Details Drawer with Hybrid DNS Panel */}
            <div className="relative">
               {selectedDomain ? (
                 <div className="titan-glass p-8 rounded-[2.5rem] border border-slate-800 animate-in fade-in zoom-in-95 sticky top-0">
@@ -259,30 +275,57 @@ const DomainsView: React.FC = () => {
                         </div>
                       </div>
 
-                      <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800">
-                        <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-3 flex justify-between items-center">
-                           Privacidad WHOIS {selectedDomain.privacy ? <Lock size={10} className="text-green-500"/> : <Lock size={10} className="text-red-500"/>}
-                        </p>
-                        <div className="flex items-center gap-3">
-                           <div className={`w-8 h-4 rounded-full relative transition-all ${selectedDomain.privacy ? 'bg-green-500' : 'bg-slate-800'}`}>
-                              <div className={`absolute top-0.5 w-3 h-3 bg-white rounded-full transition-all ${selectedDomain.privacy ? 'left-4.5' : 'left-0.5'}`}></div>
-                           </div>
-                           <span className="text-[9px] font-bold text-slate-400 uppercase">{selectedDomain.privacy ? 'Identidad Oculta' : 'Datos Públicos'}</span>
-                        </div>
-                      </div>
-
-                      <div className="bg-slate-950/50 p-4 rounded-xl border border-slate-800 group relative overflow-hidden">
-                         <div className="absolute inset-0 bg-cyan-400/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                         <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest mb-2">Titan Nameservers</p>
-                         <div className="space-y-1 font-mono text-[10px] text-cyan-400/80">
-                            <p>ns1.titan-dns-layer.net</p>
-                            <p>ns2.titan-dns-layer.net</p>
+                      {/* TITAN HYBRID DNS PANEL */}
+                      <div className="bg-slate-950/50 p-5 rounded-[1.5rem] border border-slate-800 group relative overflow-hidden">
+                         <div className="absolute inset-0 bg-orange-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                         
+                         <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
+                            <p className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-2">
+                               <Cloud size={14} className="text-orange-500" /> Hybrid Edge DNS
+                            </p>
+                            <span className="text-[8px] bg-orange-500/10 text-orange-500 px-2 py-0.5 rounded border border-orange-500/20 font-black uppercase">Required Config</span>
                          </div>
+                         
+                         {selectedDomain.dnsConfig ? (
+                           <div className="space-y-4">
+                              <div>
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                   <Server size={10}/> Cloudflare Edge (Prioridad 1)
+                                </p>
+                                <div className="space-y-2">
+                                    {selectedDomain.dnsConfig.cloudflare.map((ns, i) => (
+                                      <div key={i} className="flex items-center justify-between bg-slate-900 rounded-lg px-3 py-2 border border-slate-800">
+                                         <code className="text-[10px] font-mono text-orange-400">{ns}</code>
+                                         <button onClick={() => copyToClipboard(ns)} className="text-slate-600 hover:text-white"><Copy size={10}/></button>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                              <div>
+                                <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-2">
+                                   <Server size={10}/> Institutional Core (Prioridad 2)
+                                </p>
+                                <div className="space-y-2">
+                                    {selectedDomain.dnsConfig.institutional.map((ns, i) => (
+                                      <div key={i} className="flex items-center justify-between bg-slate-900 rounded-lg px-3 py-2 border border-slate-800">
+                                         <code className="text-[10px] font-mono text-cyan-400">{ns}</code>
+                                         <button onClick={() => copyToClipboard(ns)} className="text-slate-600 hover:text-white"><Copy size={10}/></button>
+                                      </div>
+                                    ))}
+                                </div>
+                              </div>
+                           </div>
+                         ) : (
+                           <div className="text-center py-6">
+                              <p className="text-[9px] text-yellow-500 font-bold uppercase tracking-widest mb-2">Configurando Zona</p>
+                              <p className="text-[8px] text-slate-500">El sistema está propagando las llaves DNS...</p>
+                           </div>
+                         )}
                       </div>
                    </div>
 
                    <button className="w-full mt-8 py-5 bg-slate-900 hover:bg-slate-800 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2 border border-slate-800">
-                      <ExternalLink size={14} /> Editor de Zona Avanzado
+                      <ExternalLink size={14} /> Gestionar en Cloudflare
                    </button>
                 </div>
               ) : (
@@ -299,65 +342,64 @@ const DomainsView: React.FC = () => {
         <div className="titan-glass p-12 rounded-[3rem] border border-slate-800/50 animate-in fade-in zoom-in-95">
            <div className="max-w-3xl mx-auto">
               <div className="text-center mb-12">
-                 <h3 className="text-4xl font-black text-white italic uppercase tracking-tighter mb-4">Adquisición de Activos</h3>
+                 <h3 className="text-4xl font-black text-white italic uppercase tracking-tighter mb-4">Registro de Dominios</h3>
                  <p className="text-xs font-black text-slate-500 uppercase tracking-[0.4em]">Búsqueda Global Multi-TLD en Aurum Registry</p>
               </div>
 
               <form onSubmit={handleSearchMarket} className="relative mb-12">
-                 <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-cyan-400" size={24} />
-                 <input 
-                   type="text" 
-                   placeholder="Escriba su próxima identidad digital..."
-                   value={marketQuery}
-                   onChange={(e) => setMarketQuery(e.target.value)}
-                   className="w-full bg-slate-950/80 border border-slate-800 rounded-[2rem] py-6 pl-16 pr-6 text-xl text-white focus:border-cyan-400 focus:shadow-cyan-glow outline-none transition-all font-bold placeholder:text-slate-800"
-                 />
-                 <button 
-                   type="submit" 
-                   disabled={isSearching}
-                   className="absolute right-3 top-2 bottom-2 px-8 bg-cyan-400 text-slate-950 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest hover:bg-cyan-500 transition-all disabled:opacity-50"
-                 >
-                   {isSearching ? <RefreshCw className="animate-spin" size={16} /> : 'Verificar'}
-                 </button>
+                 <div className="relative">
+                    <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-cyan-400" size={24} />
+                    <input 
+                      type="text" 
+                      placeholder="Ingrese el dominio deseado (ej: aurum-project.io)"
+                      value={marketQuery}
+                      onChange={(e) => setMarketQuery(e.target.value)}
+                      className="w-full bg-slate-950/80 border border-slate-800 rounded-[2rem] py-6 pl-16 pr-32 text-xl text-white focus:border-cyan-400 focus:shadow-cyan-glow outline-none transition-all font-bold placeholder:text-slate-800"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isSearching}
+                      className="absolute right-3 top-2 bottom-2 px-8 bg-cyan-400 text-slate-950 rounded-[1.5rem] font-black uppercase text-[10px] tracking-widest hover:bg-cyan-500 transition-all disabled:opacity-50"
+                    >
+                      {isSearching ? <RefreshCw className="animate-spin" size={16} /> : 'Verificar'}
+                    </button>
+                 </div>
               </form>
 
               <div className="space-y-4">
                  {marketResults.map((result, idx) => (
                    <div key={idx} className="flex items-center justify-between p-6 bg-slate-950/40 border border-slate-800 rounded-[2rem] hover:border-cyan-400/30 transition-all group">
                       <div className="flex items-center gap-6">
-                         <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black italic ${
-                           result.available ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                         }`}>
+                         <div className="w-12 h-12 rounded-2xl flex items-center justify-center text-lg font-black italic bg-slate-900 border border-slate-800 text-white">
                             {result.tld}
                          </div>
                          <div>
                             <div className="flex items-center gap-3">
                                <p className="text-lg font-black text-white italic tracking-tight">{result.domain}</p>
-                               {result.featured && <span className="px-2 py-0.5 bg-yellow-500/20 text-yellow-500 text-[8px] font-black uppercase rounded border border-yellow-500/30 flex items-center gap-1"><Sparkles size={8}/> Premium</span>}
+                               <span className="px-2 py-0.5 bg-green-500/10 text-green-500 text-[8px] font-black uppercase rounded border border-green-500/20">Disponible</span>
                             </div>
                             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">
-                               {result.available ? 'Disponible para registro inmediato' : 'Dominio Ocupado / Premium'}
+                               Registro Inmediato Disponible
                             </p>
                          </div>
                       </div>
                       <div className="flex items-center gap-6">
-                         {result.available && (
-                           <p className="text-xl font-black text-white italic tracking-tighter">${result.price}</p>
-                         )}
+                         <p className="text-xl font-black text-white italic tracking-tighter">$15.00</p>
                          <button 
-                           disabled={!result.available}
                            onClick={() => handlePurchase(result)}
-                           className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${
-                             result.available 
-                             ? 'bg-cyan-400 text-slate-950 hover:bg-cyan-500 hover:scale-110 shadow-cyan-glow' 
-                             : 'bg-slate-900 text-slate-600 cursor-not-allowed'
-                           }`}
+                           className="bg-cyan-400 text-slate-950 hover:bg-cyan-500 hover:scale-105 shadow-cyan-glow px-6 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all flex items-center gap-2"
                          >
-                            {result.available ? <Plus size={20} /> : <X size={20} />}
+                            <Plus size={14} /> Registrar Ahora
                          </button>
                       </div>
                    </div>
                  ))}
+                 
+                 {marketResults.length === 0 && !isSearching && (
+                    <div className="text-center p-8 border border-dashed border-slate-800 rounded-3xl">
+                       <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Ingrese un dominio para verificar disponibilidad</p>
+                    </div>
+                 )}
               </div>
            </div>
         </div>
