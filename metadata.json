@@ -1,0 +1,8 @@
+{
+  "name": "Q-SYSTEM Hosting Management",
+  "description": "A high-performance, headless hosting management system for QHOSTING.NET designed for cPanel provisioning and manual domain management with a 'Titan Glass' aesthetic.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

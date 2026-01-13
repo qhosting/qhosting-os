@@ -1,0 +1,89 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q-SYSTEM | QHOSTING.NET | AURUM CAPITAL HOLDING</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --cyan-glow: #00AEEF;
+            --aurum-gold: #FFD700;
+        }
+        html {
+            scroll-behavior: smooth;
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            cursor: default; 
+            background-color: #020617;
+        }
+        .titan-glass {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(25px) saturate(180%);
+            -webkit-backdrop-filter: blur(25px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .aurum-border {
+            border: 1px solid rgba(255, 215, 0, 0.2);
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: var(--cyan-glow); }
+        
+        @keyframes upward-flow {
+            0% { background-position: 0% 100%; }
+            100% { background-position: 0% 0%; }
+        }
+        .active-indicator {
+            background: linear-gradient(to top, var(--cyan-glow), transparent);
+            background-size: 100% 200%;
+            animation: upward-flow 2s linear infinite;
+        }
+
+        .mouse-glow {
+            position: fixed;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 174, 239, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 1;
+            transform: translate(-50%, -50%);
+            transition: width 0.3s, height 0.3s;
+        }
+    </style>
+<script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@^19.2.3",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "fastify": "https://esm.sh/fastify@^5.6.2",
+    "bullmq": "https://esm.sh/bullmq@^5.66.4",
+    "ioredis": "https://esm.sh/ioredis@^5.9.0",
+    "axios": "https://esm.sh/axios@^1.13.2",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "recharts": "https://esm.sh/recharts@^3.6.0",
+    "path": "https://esm.sh/path@^0.12.7",
+    "@fastify/static": "https://esm.sh/@fastify/static@^9.0.0",
+    "url": "https://esm.sh/url@^0.11.4",
+    "fs": "https://esm.sh/fs@^0.0.1-security",
+    "vite": "https://esm.sh/vite@^7.3.1",
+    "@vitejs/plugin-react": "https://esm.sh/@vitejs/plugin-react@^5.1.2",
+    "@react-three/fiber": "https://esm.sh/@react-three/fiber@^9.5.0",
+    "@react-three/drei": "https://esm.sh/@react-three/drei@^10.7.7",
+    "three": "https://esm.sh/three@^0.182.0",
+    "https": "https://esm.sh/https@^1.0.0"
+  }
+}
+</script>
+</head>
+<body class="bg-slate-950 text-slate-200 antialiased min-h-screen selection:bg-cyan-400/30">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+
+{
+  "name": "q-system-titan",
+  "version": "2.5.0",
+  "description": "QHOSTING.NET Titan Infrastructure Management",
+  "main": "dist/server.js",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "start": "node dist/server.js",
+    "server:dev": "ts-node backend/server.ts"
+  },
+  "dependencies": {
+    "fastify": "^4.24.3",
+    "@fastify/static": "^6.12.0",
+    "bullmq": "^4.12.0",
+    "ioredis": "^5.3.2",
+    "axios": "^1.6.2",
+    "pg": "^8.11.3",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "lucide-react": "^0.292.0",
+    "recharts": "^2.9.3",
+    "dotenv": "^16.3.1",
+    "three": "^0.160.0",
+    "@types/three": "^0.160.0",
+    "@react-three/fiber": "^8.15.12",
+    "@react-three/drei": "^9.96.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.9.0",
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.0",
+    "typescript": "^5.2.2",
+    "ts-node": "^10.9.1",
+    "vite": "^5.0.0",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.31",
+    "tailwindcss": "^3.3.5"
+  }
+}
